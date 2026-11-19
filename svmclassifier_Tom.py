@@ -21,12 +21,17 @@ X,y = shuffle(X,y)
 
 N,d = X.shape
 Ntest = 100
-Xtrain = X[0:-Ntest,:]
-ytrain = y[0:-Ntest]
-Xtest = X[-Ntest:,:]
-ytest = y[-Ntest:]
-#print("y", ytrain[0:10])
-print("x", Xtrain)
+def train_data(N_train):
+    
+    Xtrain = X[0:-N_train,:]
+    ytrain = y[0:-N_train]
+    Xtest = X[-Ntest:,:]
+    ytest = y[-Ntest:]
+    #print(Xtest)
+    #print(ytest)
+    #print("y", ytrain[0:10])
+    #print("x", Xtrain)
+    return Xtrain, ytrain, Xtest, ytest
 
 def svmsubgradient(Theta, x, y):
     """
@@ -69,13 +74,33 @@ def sgd(Xtrain, ytrain, maxiter = 10, init_stepsize = 1.0, l2_radius = 10000):
     """
     K = 10
     NN, dd = Xtrain.shape
-    print(NN)
+    #print(NN)
     Theta = np.zeros(dd*K)
     Theta.shape = dd,K
     mean_Theta = np.zeros(dd*K)
     mean_Theta.shape = dd,K
-    ## YOUR CODE HERE -- IMPLEMENT PROJECTED STOCHASTIC GRADIENT DESCENT
 
+    for iter in range(1,maxiter + 1):
+        i = np.random.randint(0, NN)
+
+        x = Xtrain[i]
+        y = ytrain[i]
+        G = svmsubgradient(Theta, x, y)
+        
+        h = init_stepsize / np.sqrt(iter)
+
+        Theta = Theta - h*G
+        Theta_norm = np.linalg.norm(Theta)
+
+        if Theta_norm > l2_radius:
+            Theta = l2_radius/Theta_norm * Theta
+        else:
+            pass
+
+        mean_Theta +=Theta
+
+
+    mean_Theta = mean_Theta/maxiter
 
     return Theta, mean_Theta
 
@@ -93,16 +118,75 @@ def classify(Xdata, Theta):
     return(inds)
 
 
-def main():
+def main(Xtrain, ytrain, Xtest, ytest, N_train):
+    
     l2_radius = 40.0
     M_raw = np.sqrt(np.mean(np.sum(np.square(Xtrain))))
     init_stepsize = l2_radius/M_raw
     maxiter = 40000
     Theta, mean_Theta = sgd(Xtrain, ytrain, maxiter, init_stepsize, l2_radius)
-    print('Error rate')
-    print(np.sum(np.not_equal(classify(Xtest, mean_Theta),ytest)/Ntest))
 
-def test():
-    svmsubgradient(1, Xtrain[0:10],ytrain[0:10])
+    print('Error rate for N_train = ', N_train)
+    not_equal_mean = np.sum(np.not_equal( classify(Xtest, mean_Theta), ytest) / Ntest)
+    not_equal = np.sum(np.not_equal( classify(Xtest, Theta), ytest) / Ntest)
+    print("Wrong classification percentage for theta mean ", not_equal_mean)
+    print("Wrong classification percentage for theta ", not_equal)
 
-test()
+
+    predictions = classify(Xtest, mean_Theta)
+
+    #print("Predicted:", predictions)
+    #print("Actual:   ", ytest)
+
+    #print("Incorrect predictions:", np.sum(predictions != ytest))
+    #print("Accuracy:", np.mean(predictions == ytest) * 100, "%")
+    return not_equal_mean, not_equal
+
+
+
+N_list = [20, 50, 100, 500, 1000, 1500]
+not_equal_list_mean = []
+not_equal_list = []
+
+for N_train in N_list:
+    
+    Xtrain, ytrain, Xtest, ytest = train_data(N_train)
+    
+    not_equal_mean, not_equal = main(Xtrain, ytrain, Xtest, ytest, N_train)
+
+    not_equal_list_mean.append(not_equal_mean)
+    not_equal_list.append(not_equal)
+
+
+plt.figure(figsize=(9, 5.5))
+
+plt.plot(
+    N_list,
+    np.array(not_equal_list_mean) * 100,
+    marker='o',
+    linewidth=2,
+    markersize=7,
+    label=r'Averaged SGD ($\bar{\Theta}$)'
+)
+
+plt.plot(
+    N_list,
+    np.array(not_equal_list) * 100,
+    marker='s',
+    linestyle='--',
+    linewidth=2,
+    markersize=7,
+    label=r'Final SGD ($\Theta$)'
+)
+
+plt.xlabel('Number of training observations', fontsize=12)
+plt.ylabel('Test classification error (%)', fontsize=12)
+plt.title('SVM Test Error vs. Training Set Size', fontsize=14, fontweight='bold')
+
+plt.xticks(N_list)
+plt.ylim(bottom=0)
+plt.grid(True, linestyle='--', alpha=0.3)
+plt.legend(fontsize=11, frameon=True)
+
+plt.tight_layout()
+plt.show()
