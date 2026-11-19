@@ -23,10 +23,12 @@ N,d = X.shape
 Ntest = 100
 def train_data(N_train):
     
-    Xtrain = X[0:-N_train,:]
-    ytrain = y[0:-N_train]
-    Xtest = X[-Ntest:,:]
+    Xtrain = X[0:N_train, :]
+    ytrain = y[0:N_train]
+
+    Xtest = X[-Ntest:, :]
     ytest = y[-Ntest:]
+
     #print(Xtest)
     #print(ytest)
     #print("y", ytrain[0:10])
@@ -130,10 +132,14 @@ def main(Xtrain, ytrain, Xtest, ytest, N_train):
     not_equal_mean = np.sum(np.not_equal( classify(Xtest, mean_Theta), ytest) / Ntest)
     not_equal = np.sum(np.not_equal( classify(Xtest, Theta), ytest) / Ntest)
     print("Wrong classification percentage for theta mean ", not_equal_mean)
-    print("Wrong classification percentage for theta ", not_equal)
+    #print("Wrong classification percentage for theta ", not_equal)
 
 
-    predictions = classify(Xtest, mean_Theta)
+    train_error = np.mean(classify(Xtrain, mean_Theta) != ytrain)
+    test_error = np.mean(classify(Xtest, mean_Theta) != ytest)
+
+    print("Training error:", train_error)
+    print("Test error:", test_error)
 
     #print("Predicted:", predictions)
     #print("Actual:   ", ytest)
@@ -158,35 +164,44 @@ for N_train in N_list:
     not_equal_list.append(not_equal)
 
 
-plt.figure(figsize=(9, 5.5))
+def plot():
+    plt.figure(figsize=(9, 5.5))
 
-plt.plot(
-    N_list,
-    np.array(not_equal_list_mean) * 100,
-    marker='o',
-    linewidth=2,
-    markersize=7,
-    label=r'Averaged SGD ($\bar{\Theta}$)'
-)
+    plt.plot(
+        N_list,
+        np.array(not_equal_list_mean) * 100,
+        marker='o',
+        linewidth=2,
+        markersize=7,
+        label=r'Averaged SGD ($\bar{\Theta}$)'
+    )
 
-plt.plot(
-    N_list,
-    np.array(not_equal_list) * 100,
-    marker='s',
-    linestyle='--',
-    linewidth=2,
-    markersize=7,
-    label=r'Final SGD ($\Theta$)'
-)
+    plt.plot(
+        N_list,
+        np.array(not_equal_list) * 100,
+        marker='s',
+        linestyle='--',
+        linewidth=2,
+        markersize=7,
+        label=r'Final SGD ($\Theta$)'
+    )
 
-plt.xlabel('Number of training observations', fontsize=12)
-plt.ylabel('Test classification error (%)', fontsize=12)
-plt.title('SVM Test Error vs. Training Set Size', fontsize=14, fontweight='bold')
+    plt.xlabel('Number of training observations', fontsize=12)
+    plt.ylabel('Test classification error (%)', fontsize=12)
+    plt.title('SVM Test Error vs. Training Set Size', fontsize=14, fontweight='bold')
 
-plt.xticks(N_list)
-plt.ylim(bottom=0)
-plt.grid(True, linestyle='--', alpha=0.3)
-plt.legend(fontsize=11, frameon=True)
+    plt.xticks(N_list)
+    plt.ylim(bottom=0)
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend(fontsize=11, frameon=True)
 
-plt.tight_layout()
-plt.show()
+    plt.tight_layout()
+    plt.show()
+
+
+plot()
+
+
+
+
+
