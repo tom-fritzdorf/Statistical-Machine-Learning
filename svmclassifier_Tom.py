@@ -60,8 +60,10 @@ def svmsubgradient(Theta, x, y):
 
     return(G)
 
-def sgd(Xtrain, ytrain, maxiter = 10, init_stepsize = 1.0, l2_radius = 10000):
+def sgd(Xtrain, ytrain, maxiter = 10, init_stepsize = 1.0, l2_radius = 10000, alpha = 0.5):
+
     """
+
     Performs maxiter iterations of projected stochastic gradient descent
     on the data contained in the matrix Xtrain, of size n-by-d, where n
     is the sample size and d is the dimension, and the label vector
@@ -74,6 +76,7 @@ def sgd(Xtrain, ytrain, maxiter = 10, init_stepsize = 1.0, l2_radius = 10000):
     multiclass SVM objective, and projecting onto the Euclidean ball
     The stepsize is init_stepsize / sqrt(iteration).
     """
+    
     K = 10
     NN, dd = Xtrain.shape
     #print(NN)
@@ -88,10 +91,10 @@ def sgd(Xtrain, ytrain, maxiter = 10, init_stepsize = 1.0, l2_radius = 10000):
         x = Xtrain[i]
         y = ytrain[i]
         G = svmsubgradient(Theta, x, y)
-        
-        h = init_stepsize / np.sqrt(iter)
 
-        Theta = Theta - h*G
+        lr = init_stepsize / (iter ** alpha)
+        
+        Theta = Theta - lr*G
         Theta_norm = np.linalg.norm(Theta)
 
         if Theta_norm > l2_radius:
@@ -120,26 +123,30 @@ def classify(Xdata, Theta):
     return(inds)
 
 
-def main(Xtrain, ytrain, Xtest, ytest, N_train):
+def main(Xtrain, ytrain, Xtest, ytest, N_train, alpha):
     
+
     l2_radius = 40.0
     M_raw = np.sqrt(np.mean(np.sum(np.square(Xtrain))))
     init_stepsize = l2_radius/M_raw
     maxiter = 40000
-    Theta, mean_Theta = sgd(Xtrain, ytrain, maxiter, init_stepsize, l2_radius)
+    
+    
+    Theta, mean_Theta = sgd(Xtrain, ytrain, maxiter, init_stepsize, l2_radius, alpha)
 
     print('Error rate for N_train = ', N_train)
     not_equal_mean = np.sum(np.not_equal( classify(Xtest, mean_Theta), ytest) / Ntest)
     not_equal = np.sum(np.not_equal( classify(Xtest, Theta), ytest) / Ntest)
     print("Wrong classification percentage for theta mean ", not_equal_mean)
-    #print("Wrong classification percentage for theta ", not_equal)
+    print("Wrong classification percentage for theta ", not_equal)
 
 
-    train_error = np.mean(classify(Xtrain, mean_Theta) != ytrain)
-    test_error = np.mean(classify(Xtest, mean_Theta) != ytest)
+    train_error_mean = np.sum(np.not_equal( classify(Xtrain, mean_Theta), ytrain) / N_train)
+    train_error = np.sum(np.not_equal( classify(Xtrain, Theta), ytrain) / N_train)
 
-    print("Training error:", train_error)
-    print("Test error:", test_error)
+    print("Training error: ", train_error_mean)
+    print("Training error mean: ", train_error)
+    #print("Test error:", test_error)
 
     #print("Predicted:", predictions)
     #print("Actual:   ", ytest)
@@ -151,18 +158,32 @@ def main(Xtrain, ytrain, Xtest, ytest, N_train):
 
 
 N_list = [20, 50, 100, 500, 1000, 1500]
+alpha_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+
 not_equal_list_mean = []
 not_equal_list = []
+a_theta_mean = []
+a_theta = []
+
 
 for N_train in N_list:
-    
+    np.random.seed(seed)
+
     Xtrain, ytrain, Xtest, ytest = train_data(N_train)
     
-    not_equal_mean, not_equal = main(Xtrain, ytrain, Xtest, ytest, N_train)
+    not_equal_mean, not_equal = main(Xtrain, ytrain, Xtest, ytest, N_train, 0.5)
 
     not_equal_list_mean.append(not_equal_mean)
     not_equal_list.append(not_equal)
 
+for a in alpha_list:
+    np.random.seed(seed)
+
+    Xtrain, ytrain, Xtest, ytest = train_data(1500)
+        
+    not_equal_mean, not_equal = main(Xtrain, ytrain, Xtest, ytest, 1500, a)
+    a_theta_mean.append(not_equal_mean)
+    a_theta.append(not_equal)
 
 def plot():
     plt.figure(figsize=(9, 5.5))
@@ -194,6 +215,44 @@ def plot():
     plt.ylim(bottom=0)
     plt.grid(True, linestyle='--', alpha=0.3)
     plt.legend(fontsize=11, frameon=True)
+
+    plt.tight_layout()
+    plt.show()
+
+    plt.figure(figsize=(9, 5.5))
+
+    plt.plot(
+        alpha_list,
+        np.array(a_theta_mean) * 100,
+        marker='o',
+        linewidth=2,
+        markersize=8,
+        label=r'Averaged SGD ($\bar{\Theta}$)'
+    )
+
+    plt.plot(
+        alpha_list,
+        np.array(a_theta) * 100,
+        marker='s',
+        linestyle='--',
+        linewidth=2,
+        markersize=8,
+        label=r'Final SGD ($\Theta$)'
+    )
+
+    plt.xlabel(r'Learning-rate exponent $\alpha$', fontsize=12)
+    plt.ylabel('Test classification error (%)', fontsize=12)
+
+    plt.title(
+        'SVM Test Error vs. Learning-Rate Exponent',
+        fontsize=14,
+        fontweight='bold'
+    )
+
+    plt.xticks(alpha_list)
+    plt.ylim(bottom=0)
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend(fontsize=11)
 
     plt.tight_layout()
     plt.show()
