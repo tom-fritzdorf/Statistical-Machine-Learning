@@ -18,13 +18,15 @@ digits = datasets.load_digits()
 X = digits.data
 y = np.array(digits.target, dtype = int)
 X,y = shuffle(X,y)
+
 N,d = X.shape
 Ntest = 100
 Xtrain = X[0:-Ntest,:]
 ytrain = y[0:-Ntest]
 Xtest = X[-Ntest:,:]
 ytest = y[-Ntest:]
-
+#print("y", ytrain[0:10])
+print("x", Xtrain)
 
 def svmsubgradient(Theta, x, y):
     """
@@ -34,7 +36,20 @@ def svmsubgradient(Theta, x, y):
     x of size d, and y an integer in {0, 1, ..., 9}.
     """
     G = np.zeros(Theta.shape)
-    ## IMPLEMENT THE SUBGRADIENT CALCULATION -- YOUR CODE HERE
+    X_scores = x @ Theta
+    J_star = np.argmax(X_scores)
+    if J_star == y:
+        X_scores[J_star] = -np.inf
+        J_star = np.argmax(X_scores)
+    else:
+        pass
+
+    g_j = 1 + x @ Theta[:,J_star] - x @ Theta[:,y]
+    if g_j > 0:
+        G[:, J_star] = x
+        G[:, y] = -x
+    else:
+        pass #since G is already zeros
 
     return(G)
 
@@ -61,6 +76,7 @@ def sgd(Xtrain, ytrain, maxiter = 10, init_stepsize = 1.0, l2_radius = 10000):
     mean_Theta.shape = dd,K
     ## YOUR CODE HERE -- IMPLEMENT PROJECTED STOCHASTIC GRADIENT DESCENT
 
+
     return Theta, mean_Theta
 
 def classify(Xdata, Theta):
@@ -77,12 +93,16 @@ def classify(Xdata, Theta):
     return(inds)
 
 
+def main():
+    l2_radius = 40.0
+    M_raw = np.sqrt(np.mean(np.sum(np.square(Xtrain))))
+    init_stepsize = l2_radius/M_raw
+    maxiter = 40000
+    Theta, mean_Theta = sgd(Xtrain, ytrain, maxiter, init_stepsize, l2_radius)
+    print('Error rate')
+    print(np.sum(np.not_equal(classify(Xtest, mean_Theta),ytest)/Ntest))
 
-l2_radius = 40.0
-M_raw = np.sqrt(np.mean(np.sum(np.square(Xtrain))))
-init_stepsize = l2_radius/M_raw
-maxiter = 40000
-Theta, mean_Theta = sgd(Xtrain, ytrain, maxiter, init_stepsize, l2_radius)
-print('Error rate')
-print(np.sum(np.not_equal(classify(Xtest, mean_Theta),ytest)/Ntest))
+def test():
+    svmsubgradient(1, Xtrain[0:10],ytrain[0:10])
 
+test()
