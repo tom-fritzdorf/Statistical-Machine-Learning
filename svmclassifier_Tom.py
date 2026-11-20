@@ -23,11 +23,11 @@ N,d = X.shape
 Ntest = 100
 def train_data(N_train):
     
-    Xtrain = X[0:N_train, :]
-    ytrain = y[0:N_train]
+    Xtrain = X[0:N_train-1, :]
+    ytrain = y[0:N_train-1]
 
-    Xtest = X[-Ntest:, :]
-    ytest = y[-Ntest:]
+    Xtest = X[-Ntest+1:, :]
+    ytest = y[-Ntest+1:]
 
     #print(Xtest)
     #print(ytest)
@@ -45,6 +45,7 @@ def svmsubgradient(Theta, x, y):
     G = np.zeros(Theta.shape)
     X_scores = x @ Theta
     J_star = np.argmax(X_scores)
+    
     if J_star == y:
         X_scores[J_star] = -np.inf
         J_star = np.argmax(X_scores)
