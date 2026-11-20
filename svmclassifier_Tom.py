@@ -23,11 +23,13 @@ N,d = X.shape
 Ntest = 100
 def train_data(N_train):
     
-    Xtrain = X[0:N_train-1, :]
-    ytrain = y[0:N_train-1]
+    Xtrain = X[0:N_train, :]
+    ytrain = y[0:N_train]
 
-    Xtest = X[-Ntest+1:, :]
-    ytest = y[-Ntest+1:]
+    Xtest = X[-Ntest:, :]
+    ytest = y[-Ntest:]
+    print(Xtrain.shape)
+    print(Xtest.shape)
 
     #print(Xtest)
     #print(ytest)
