@@ -12,6 +12,7 @@ from sklearn.utils import shuffle
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process import GaussianProcessRegressor
 
 #choose a seed
 seed = 2027
@@ -23,9 +24,8 @@ digits = datasets.load_digits()
 X = digits.data / 16.0
 y = np.array(digits.target, dtype = int)
 X,y = shuffle(X,y)
-N,d = X.shape
+N,d = X.shape 
 
-N = 600
 Ntrain_list = [20, 50, 100, 500, 1000, 1500]
 Ntest = 100
 
@@ -51,16 +51,16 @@ for kernel_name, kernel in kernels.items():
         ytrain = y[0:Ntrain]
 
         
-        gpc_rbf = GaussianProcessClassifier(kernel=kernel, optimizer=None).fit(Xtrain, ytrain)
-        yp_train = gpc_rbf.predict(Xtrain)
+        gpc = GaussianProcessClassifier(kernel=kernel, optimizer=None).fit(Xtrain, ytrain)
+        yp_train = gpc.predict(Xtrain)
         train_error_rate = np.mean(np.not_equal(yp_train,ytrain))
-        yp_test = gpc_rbf.predict(Xtest)
+        yp_test = gpc.predict(Xtest)
         test_error_rate = np.mean(np.not_equal(yp_test,ytest))
 
         train_errors.append(train_error_rate)
         test_errors.append(test_error_rate)
 
-        print(Ntrain, test_error_rate)
+        print(kernel_name, Ntrain, train_error_rate, test_error_rate)
     plt.plot(Ntrain_list, test_errors, marker="o", label=kernel_name)
 
 plt.xlabel("Number of training samples")
@@ -72,4 +72,56 @@ plt.show()
 
 
 
+for kernel_name, kernel in kernels.items():
+
+    test_errors = []
+    train_errors = []
+
+    for Ntrain in Ntrain_list:
+
+        # Select training data
+        Xtrain = X[0:Ntrain, :]
+        ytrain = y[0:Ntrain]
+
+        # Convert labels to one-hot vectors
+        Ytrain = np.eye(10)[ytrain]
+
+        # Train Gaussian Process Regressor
+        gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(Xtrain, Ytrain)
+
+        # Predict training data
+        Yp_train = gpr.predict(Xtrain)
+        yp_train = np.argmax(Yp_train, axis=1)
+
+        train_error_rate = np.mean(
+            np.not_equal(yp_train, ytrain)
+        )
+
+        # Predict test data
+        Yp_test = gpr.predict(Xtest)
+        yp_test = np.argmax(Yp_test, axis=1)
+
+        test_error_rate = np.mean(
+            np.not_equal(yp_test, ytest)
+        )
+
+        # Store results
+        train_errors.append(train_error_rate)
+        test_errors.append(test_error_rate)
+
+        print(kernel_name, Ntrain, train_error_rate, test_error_rate)
+
+    plt.plot(
+        Ntrain_list,
+        test_errors,
+        marker="o",
+        label=kernel_name
+    )
+
+plt.xlabel("Number of training samples")
+plt.ylabel("Test error rate")
+plt.title("Gaussian Process Regression Classification")
+plt.legend()
+plt.grid()
+plt.show()
 
