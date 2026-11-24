@@ -6,9 +6,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import DotProduct
 
-# import some data to play with
-digits = datasets.load_digits()
-
+# import some data to play wit
 
 #choose a seed
 seed = 2027
@@ -44,6 +42,7 @@ def svmsubgradient(Theta, x, y):
     The inputs are Theta, of size d-by-K, where K is the number of classes,
     x of size d, and y an integer in {0, 1, ..., 9}.
     """
+
     G = np.zeros(Theta.shape)
     X_scores = x @ Theta
     J_star = np.argmax(X_scores)
@@ -55,6 +54,7 @@ def svmsubgradient(Theta, x, y):
         pass
 
     g_j = 1 + x @ Theta[:,J_star] - x @ Theta[:,y]
+
     if g_j > 0:
         G[:, J_star] = x
         G[:, y] = -x
@@ -136,6 +136,21 @@ def main(Xtrain, ytrain, Xtest, ytest, N_train, alpha):
     
     
     Theta, mean_Theta = sgd(Xtrain, ytrain, maxiter, init_stepsize, l2_radius, alpha)
+
+    #if N_train == 1500:
+    #    predictions = classify(Xtest, mean_Theta)
+    #    wrong_indices = np.where(predictions != ytest)[0]
+    #
+    #    if len(wrong_indices) > 0:
+    #        i = wrong_indices[0]#
+
+    #        plt.figure(figsize=(4, 4))
+    #        plt.imshow(Xtest[i].reshape(8, 8), cmap='gray')
+    #        plt.title(f"True digit: {ytest[i]} | Predicted: {predictions[i]}")
+    #        plt.axis('off')
+    #        plt.show()
+    #else:
+    #    print("No wrong prediction found.")
 
     print('Error rate for N_train = ', N_train)
     not_equal_mean = np.sum(np.not_equal( classify(Xtest, mean_Theta), ytest) / Ntest)
