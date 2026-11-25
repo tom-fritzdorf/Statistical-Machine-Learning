@@ -39,8 +39,10 @@ ytest = y[-Ntest:]
 #You can check the final hyperparameters with gpc_rbf.kernel_.get_params()['kernels']
 
 kernels = {
-    "RBF": 1.0 * RBF([1.0]),
-    "DotProduct": DotProduct(1.0),
+    "RBF (l=1)": 1.0 * RBF(length_scale=1.0),
+    "RBF (l=2)": 1.0 * RBF(length_scale=2.0),
+    "DotProduct (s0=1)": DotProduct(sigma_0=1.0),
+    "DotProduct (s0=2)": DotProduct(sigma_0=2.0),
 }
 
 for kernel_name, kernel in kernels.items():
@@ -111,12 +113,7 @@ for kernel_name, kernel in kernels.items():
 
         print(kernel_name, Ntrain, train_error_rate, test_error_rate)
 
-    plt.plot(
-        Ntrain_list,
-        test_errors,
-        marker="o",
-        label=kernel_name
-    )
+    plt.plot(Ntrain_list, test_errors, marker="o", label=kernel_name)
 
 plt.xlabel("Number of training samples")
 plt.ylabel("Test error rate")
